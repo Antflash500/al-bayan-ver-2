@@ -30,7 +30,7 @@ class ForgotPasswordController extends Controller
         $user = $this->studentRepository->findByEmailOrNim($data['email']);
 
         if ($user) {
-            $this->authService->sendOtp($user->email);
+            $this->authService->sendOtp($user->email, 'reset');
         }
 
         return redirect()->route('verify-otp', ['email' => $data['email']]);
@@ -50,7 +50,7 @@ class ForgotPasswordController extends Controller
             'code' => ['required', 'string', 'size:6', 'numeric'],
         ]);
 
-        $valid = $this->authService->verifyOtp($data['email'], $data['code']);
+        $valid = $this->authService->verifyOtp($data['email'], $data['code'], 'reset');
 
         if (! $valid) {
             return back()->withErrors(['code' => 'Kode OTP salah atau telah kedaluwarsa.']);
@@ -72,18 +72,25 @@ class ForgotPasswordController extends Controller
 
     public function reset(Request $request)
     {
+        // Email target diambil dari sesi (hasil OTP yang sudah diverifikasi),
+        // bukan dari input form — mencegah penggantian akun target.
+        $email = $request->session()->get('password_reset_email');
+
+        abort_unless($email, 419);
+
         $data = $request->validate([
-            'email' => ['required', 'email'],
             'password' => ['required', 'confirmed', 'min:8'],
         ]);
 
-        $user = $this->studentRepository->findByEmailOrNim($data['email']);
+        $user = $this->studentRepository->findByEmailOrNim($email);
 
         abort_unless($user, 400);
 
         $this->authService->resetPassword($user, $data['password']);
 
         $request->session()->forget('password_reset_email');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('login')->with('status', 'Password berhasil diubah. Silakan masuk.');
     }

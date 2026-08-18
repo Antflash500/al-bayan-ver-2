@@ -28,7 +28,7 @@ class VerifyEmailController extends Controller
             'code' => ['required', 'string', 'size:6', 'numeric'],
         ]);
 
-        $verified = $this->authService->verifyOtp($user->email, $data['code']);
+        $verified = $this->authService->verifyOtp($user->email, $data['code'], 'verify');
 
         if (! $verified) {
             return back()->withErrors(['code' => 'Kode OTP salah atau telah kedaluwarsa.']);
@@ -36,7 +36,11 @@ class VerifyEmailController extends Controller
 
         $this->authService->markEmailVerified($user);
 
-        return redirect()->route(auth()->user()->isAdmin() ? 'admin.home' : 'portal.home');
+        return redirect()->route(match (true) {
+            $user->isAdmin() => 'admin.home',
+            $user->isGuru() => 'guru.home',
+            default => 'portal.home',
+        });
     }
 
     public function resend(Request $request)
@@ -45,7 +49,7 @@ class VerifyEmailController extends Controller
 
         abort_unless($user, 401);
 
-        $result = $this->authService->sendOtp($user->email);
+        $result = $this->authService->sendOtp($user->email, 'verify');
 
         return back()->with('status', $result['sent'] ? 'Kode OTP baru telah dikirim.' : 'Silakan tunggu sebelum mengirim ulang.');
     }

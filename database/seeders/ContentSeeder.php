@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Announcement;
 use App\Models\Gallery;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
@@ -36,21 +35,5 @@ class ContentSeeder extends Seeder
                 ],
             );
         }
-
-        Announcement::updateOrCreate(
-            ['title' => 'Pendaftaran Gelombang Baru Telah Dibuka'],
-            [
-                'content' => 'Pendaftaran peserta baru untuk program Bahasa Arab Intensif kini telah dibuka. Kuota terbatas, segera daftar melalui halaman registrasi.',
-                'published_at' => now()->subDays(2),
-            ],
-        );
-
-        Announcement::updateOrCreate(
-            ['title' => 'Jadwal Pembinaan Pekan Ini'],
-            [
-                'content' => 'Pembinaan karakter dan kajian rutin diadakan setiap akhir pekan. Silakan cek agenda pada dashboard masing-masing.',
-                'published_at' => now()->subDay(),
-            ],
-        );
     }
 }

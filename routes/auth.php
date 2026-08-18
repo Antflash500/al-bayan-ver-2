@@ -221,7 +221,14 @@ Route::middleware('auth')->group(function () {
         Route::patch('/profil', [GuruController::class, 'updateProfil'])->name('profil.update');
     });
 
-    Route::redirect('/dashboard', '/admin');
+    // Alias lintas-peran: arahkan ke dashboard sesuai role yang login.
+    Route::get('/dashboard', function () {
+        return redirect()->route(match (true) {
+            auth()->user()?->isAdmin() => 'admin.home',
+            auth()->user()?->isGuru() => 'guru.home',
+            default => 'siswa.dashboard',
+        });
+    });
 });
 
 // Public webhook endpoint (no auth required, signature-protected)

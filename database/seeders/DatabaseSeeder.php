@@ -9,6 +9,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            AsramaSeeder::class,
             ContentSeeder::class,
             PortalSeeder::class,
         ]);

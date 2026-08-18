@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\User;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,9 +14,14 @@ class CheckUserStatus
         if (auth()->check()) {
             $user = auth()->user();
 
-            if (in_array($user->status, ['nonaktif', 'blocked', 'pending'], true)) {
+            if (in_array($user->status, [User::STATUS_NONAKTIF, User::STATUS_BLOCKED, User::STATUS_PENDING], true)) {
                 if ($request->route()?->getAction('uses') !== 'App\Http\Controllers\Auth\LogoutController@destroy') {
                     auth()->logout();
+
+                    if ($request->hasSession()) {
+                        $request->session()->invalidate();
+                        $request->session()->regenerateToken();
+                    }
 
                     if ($request->expectsJson()) {
                         return response()->json(['message' => 'Akun Anda tidak aktif'], 403);

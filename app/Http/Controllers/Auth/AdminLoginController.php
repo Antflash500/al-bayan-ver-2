@@ -33,7 +33,10 @@ class AdminLoginController extends Controller
             ->orWhere('email', $data['username'])
             ->first();
 
-        if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->isAdmin()) {
+        if (! $user
+            || ! Hash::check($data['password'], $user->password)
+            || ! $user->isAdmin()
+            || $user->status !== User::STATUS_AKTIF) {
             SecurityGuard::recordLoginFailure((string) $request->ip());
             SecurityGuard::recordEndpoint(SecurityLog::TIPE_LOGIN_GAGAL, (string) $request->ip(), [
                 'path' => '/admin/login',
@@ -41,7 +44,7 @@ class AdminLoginController extends Controller
             ]);
 
             throw ValidationException::withMessages([
-                'username' => 'Username atau password tidak valid.',
+                'username' => 'Kredensial tidak valid, atau akun admin nonaktif.',
             ]);
         }
 

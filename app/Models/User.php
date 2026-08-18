@@ -23,6 +23,8 @@ class User extends Authenticatable
 
     public const STATUS_PENDING = 'pending';
 
+    public const STATUS_BLOCKED = 'blocked';
+
     protected $table = 'users';
 
     protected $fillable = [

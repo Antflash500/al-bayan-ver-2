@@ -104,7 +104,7 @@ composer dev
 
 - Server pengembangan biasanya dijalankan di latar belakang pada port `505`.
 - Generator kwitansi/biodata memakai Python; biarkan `PYTHON_BINARY` dan `KWITANSI_PYTHON` kosong agar dideteksi otomatis.
-- Database diimpor dari PostgreSQL lama ke MySQL (`al_bayan`); dump data siswa & admin tersedia di `images/data-siswa-admin.mysql`.
+- Database diimpor dari PostgreSQL lama ke MySQL (`al_bayan`); dump asli data siswa & admin disimpan di `storage/app/quarantine-dump/data-siswa-admin.mysql` (di luar repo).
 
 ## Lisensi
 

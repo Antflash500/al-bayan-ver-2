@@ -2,12 +2,15 @@
 
 namespace App\Services;
 
+use App\Mail\OtpMail;
 use App\Models\StudentProfile;
 use App\Models\User;
 use App\Repositories\StudentRepository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class AuthenticationService
 {
@@ -48,7 +51,9 @@ class AuthenticationService
 
     public function login(string $username, string $password): ?User
     {
-        $user = User::where('username', $username)->first();
+        $user = User::where('username', $username)
+            ->orWhere('email', $username)
+            ->first();
 
         if (! $user
             || ! Hash::check($password, $user->password)
@@ -59,9 +64,9 @@ class AuthenticationService
         return $user;
     }
 
-    public function sendOtp(string $email): array
+    public function sendOtp(string $email, string $purpose = 'reset'): array
     {
-        $limitKey = $this->otpLockKey($email);
+        $limitKey = $this->otpLockKey($email, $purpose);
 
         if (Cache::has($limitKey.'_reset')) {
             $remaining = Cache::get($limitKey.'_reset');
@@ -71,29 +76,27 @@ class AuthenticationService
 
         $code = str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
 
-        Cache::put($this->otpKey($email), $code, now()->addSeconds(self::OTP_TTL_SECONDS));
-        Cache::increment($limitKey);
+        Cache::put($this->otpKey($email, $purpose), $code, now()->addSeconds(self::OTP_TTL_SECONDS));
         Cache::put($limitKey.'_reset', self::OTP_RESEND_LOCK_SECONDS, now()->addSeconds(self::OTP_RESEND_LOCK_SECONDS));
 
-        // @todo Send via queue + Laravel Mail notification.
-        logger()->info("OTP for {$email}: {$code}");
+        $this->deliverOtp($email, $code, $purpose);
 
         return ['sent' => true, 'retry_after' => self::OTP_RESEND_LOCK_SECONDS];
     }
 
-    public function verifyOtp(string $email, string $code): bool
+    public function verifyOtp(string $email, string $code, string $purpose = 'reset'): bool
     {
-        $attemptKey = $this->otpAttemptsKey($email);
+        $attemptKey = $this->otpAttemptsKey($email, $purpose);
         $attempts = (int) Cache::get($attemptKey, 0);
 
         if ($attempts >= self::OTP_MAX_ATTEMPTS) {
-            Cache::forget($this->otpKey($email));
+            Cache::forget($this->otpKey($email, $purpose));
             Cache::forget($attemptKey);
 
             return false;
         }
 
-        $stored = Cache::get($this->otpKey($email));
+        $stored = Cache::get($this->otpKey($email, $purpose));
 
         if (! $stored || ! hash_equals((string) $stored, $code)) {
             Cache::increment($attemptKey);
@@ -102,9 +105,9 @@ class AuthenticationService
             return false;
         }
 
-        Cache::forget($this->otpKey($email));
+        Cache::forget($this->otpKey($email, $purpose));
         Cache::forget($attemptKey);
-        Cache::forget($this->otpLockKey($email));
+        Cache::forget($this->otpLockKey($email, $purpose));
 
         return true;
     }
@@ -119,18 +122,36 @@ class AuthenticationService
         $user->forceFill(['password' => Hash::make($password)])->save();
     }
 
-    private function otpKey(string $email): string
+    private function otpKey(string $email, string $purpose): string
     {
-        return "otp:$email";
+        return "otp:{$purpose}:{$email}";
     }
 
-    private function otpAttemptsKey(string $email): string
+    private function otpAttemptsKey(string $email, string $purpose): string
     {
-        return "otp-attempts:$email";
+        return "otp-attempts:{$purpose}:{$email}";
     }
 
-    private function otpLockKey(string $email): string
+    private function otpLockKey(string $email, string $purpose): string
     {
-        return "otp-lock:$email";
+        return "otp-lock:{$purpose}:{$email}";
+    }
+
+    private function deliverOtp(string $email, string $code, string $purpose): void
+    {
+        $password = (string) config('mail.password', '');
+
+        // Mail belum dikonfigurasi (password placeholder/kosong): cukup catat ke log agar alur tetap bisa diuji.
+        if ($password === '' || str_contains($password, 'your_email_password')) {
+            logger()->info("OTP untuk {$email} (mail belum dikonfigurasi): {$code}");
+
+            return;
+        }
+
+        try {
+            Mail::to($email)->send(new OtpMail($code, $purpose));
+        } catch (Throwable $e) {
+            logger()->warning("Gagal mengirim OTP ke {$email}: {$e->getMessage()}. Kode: {$code}");
+        }
     }
 }

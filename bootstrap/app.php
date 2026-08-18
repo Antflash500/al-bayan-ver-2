@@ -50,7 +50,6 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'role' => EnsureRole::class,
-            'status' => CheckUserStatus::class,
         ]);
 
         $middleware->redirectGuestsTo(fn (Request $request) => match (true) {
