@@ -15,6 +15,8 @@ class User extends Authenticatable
 
     public const ROLE_STUDENT = 'student';
 
+    public const ROLE_GURU = 'guru';
+
     public const STATUS_AKTIF = 'aktif';
 
     public const STATUS_NONAKTIF = 'nonaktif';
@@ -30,6 +32,11 @@ class User extends Authenticatable
         'password',
         'role',
         'status',
+        'jabatan',
+        'phone',
+        'nik',
+        'address',
+        'birth_date',
         'last_activity_at',
         'email_verified_at',
     ];
@@ -44,6 +51,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'last_activity_at' => 'datetime',
+            'birth_date' => 'date',
             'password' => 'hashed',
         ];
     }
@@ -68,6 +76,11 @@ class User extends Authenticatable
         return $this->hasMany(SiswaProgram::class);
     }
 
+    public function absensi(): HasMany
+    {
+        return $this->hasMany(Absensi::class, 'user_id');
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
@@ -76,6 +89,11 @@ class User extends Authenticatable
     public function isStudent(): bool
     {
         return $this->role === self::ROLE_STUDENT || $this->role === 'siswa';
+    }
+
+    public function isGuru(): bool
+    {
+        return $this->role === self::ROLE_GURU;
     }
 
     public function isPending(): bool

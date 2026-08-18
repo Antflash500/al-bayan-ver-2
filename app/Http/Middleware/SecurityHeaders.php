@@ -70,9 +70,10 @@ class SecurityHeaders
 
     private function csp(bool $isProduction, bool $isSecure): string
     {
-        // 'unsafe-inline' untuk script hanya diizinkan saat non-production
-        // karena Vite/React-refresh menyuntikkan preamble inline di mode dev.
-        $scriptSrc = $isProduction ? "'self'" : "'self' 'unsafe-inline'";
+        $viteDev = 'http://localhost:5051';
+        $viteOrigins = $isProduction ? '' : " {$viteDev} http://127.0.0.1:5051";
+        $scriptSrc = $isProduction ? "'self'" : "'self' 'unsafe-inline'{$viteOrigins}";
+        $connectSrc = $isProduction ? "'self' ws: wss:" : "'self'{$viteOrigins} ws: wss:";
 
         $directives = [
             "default-src 'self'",
@@ -82,11 +83,11 @@ class SecurityHeaders
             "form-action 'self'",
             "manifest-src 'self'",
             "script-src {$scriptSrc}",
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-            "font-src 'self' https://fonts.gstatic.com",
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com{$viteOrigins}",
+            "font-src 'self' https://fonts.gstatic.com{$viteOrigins}",
             "img-src 'self' data: blob: https:",
             "media-src 'self' blob:",
-            'connect-src \'self\' ws: wss:',
+            "connect-src {$connectSrc}",
             'frame-src https://www.youtube.com https://www.youtube-nocookie.com',
         ];
 

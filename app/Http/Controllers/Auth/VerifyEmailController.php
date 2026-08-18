@@ -36,7 +36,7 @@ class VerifyEmailController extends Controller
 
         $this->authService->markEmailVerified($user);
 
-        return redirect()->route(auth()->user()->isAdmin() ? 'dashboard' : 'portal.home');
+        return redirect()->route(auth()->user()->isAdmin() ? 'admin.home' : 'portal.home');
     }
 
     public function resend(Request $request)

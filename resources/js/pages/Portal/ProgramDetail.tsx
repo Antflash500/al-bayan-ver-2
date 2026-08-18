@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { ArrowRight, BookOpen, Clock, GraduationCap } from 'lucide-react';
 import StudentPortalLayout from '@/layouts/StudentPortalLayout';
-import { ProgressBar } from '@/pages/Portal/parts';
+import { ProgressBar } from '@/components/portal/parts';
 import type { ProgramKursus } from '@/types/models';
 
 export default function PortalProgramDetail({ program, isEnrolled }: { program: ProgramKursus; isEnrolled: boolean }) {

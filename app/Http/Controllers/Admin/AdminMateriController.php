@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\MateriKonten;
 use App\Models\ProgramKursus;
+use App\Support\UploadSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -236,7 +237,7 @@ class AdminMateriController extends Controller
             }
 
             $file = $request->file($field);
-            $path = $file->store('materi', 'public');
+            $path = $this->storeSafe($file, 'materi', $field);
 
             $files[$field.'_path'] = $path;
             $files[$field.'_name'] = $file->getClientOriginalName();
@@ -270,7 +271,7 @@ class AdminMateriController extends Controller
         }
 
         $file = $request->file($field);
-        $path = $file->store('materi', 'public');
+        $path = $this->storeSafe($file, 'materi', $field);
 
         return [
             $pathKey => $path,
@@ -300,13 +301,28 @@ class AdminMateriController extends Controller
             abort(422, 'Jenis file tidak sesuai dengan tipe konten.');
         }
 
-        $path = $file->store('materi', 'public');
+        $path = $this->storeSafe($file, 'materi', $tipe);
 
         return [
             'file_path' => $path,
             'file_name' => $file->getClientOriginalName(),
             'file_size' => $file->getSize(),
         ];
+    }
+
+    private function storeSafe($file, string $dir, string $field): string
+    {
+        $context = match ($field) {
+            'pdf' => 'pdf',
+            'video' => 'video',
+            default => 'image',
+        };
+
+        try {
+            return UploadSanitizer::store($file, $dir, $context);
+        } catch (\Throwable $e) {
+            abort(422, 'Jenis berkas tidak diizinkan untuk konten ini.');
+        }
     }
 
     private function swapWithNeighbor(int $id, int $urutan, string $direction, array $siblings, string $model, string $parentKey, int $parentId): void

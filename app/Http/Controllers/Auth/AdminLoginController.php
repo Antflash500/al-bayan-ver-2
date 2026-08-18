@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SecurityLog;
 use App\Models\User;
 use App\Support\SecurityGuard;
 use Illuminate\Http\Request;
@@ -34,6 +35,10 @@ class AdminLoginController extends Controller
 
         if (! $user || ! Hash::check($data['password'], $user->password) || ! $user->isAdmin()) {
             SecurityGuard::recordLoginFailure((string) $request->ip());
+            SecurityGuard::recordEndpoint(SecurityLog::TIPE_LOGIN_GAGAL, (string) $request->ip(), [
+                'path' => '/admin/login',
+                'keterangan' => 'Percobaan login admin gagal untuk username: '.$data['username'],
+            ]);
 
             throw ValidationException::withMessages([
                 'username' => 'Username atau password tidak valid.',
@@ -43,6 +48,11 @@ class AdminLoginController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
         SecurityGuard::clearLoginFailures((string) $request->ip());
+        SecurityGuard::recordEndpoint(SecurityLog::TIPE_LOGIN_SUKSES, (string) $request->ip(), [
+            'path' => '/admin/login',
+            'browser' => substr((string) $request->userAgent(), 0, 190),
+            'keterangan' => 'Login admin berhasil.',
+        ], $user->id);
 
         return redirect()->route('admin.home');
     }

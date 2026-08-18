@@ -1,7 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import { Award, ArrowRight } from 'lucide-react';
 import StudentPortalLayout from '@/layouts/StudentPortalLayout';
-import { EmptyState } from '@/pages/Portal/parts';
+import { EmptyState } from '@/components/portal/parts';
 import type { Sertifikat } from '@/types/models';
 
 export default function PortalSertifikat({

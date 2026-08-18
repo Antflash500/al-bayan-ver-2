@@ -8,6 +8,7 @@ use App\Models\SiswaProgram;
 use App\Models\StudentProfile;
 use App\Models\User;
 use App\Repositories\UserRepository;
+use App\Support\UploadSanitizer;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +21,7 @@ class AdminService
     private const DISPLAY_ROLES = [
         User::ROLE_ADMIN => 'admin',
         User::ROLE_STUDENT => 'siswa',
+        User::ROLE_GURU => 'guru',
     ];
 
     public function __construct(private readonly UserRepository $users) {}
@@ -92,7 +94,7 @@ class AdminService
                 'name' => $data['nama_lengkap'],
                 'email' => $data['email'] ?? null,
                 'password' => $data['password'],
-                'role' => $data['role'] === 'admin' ? User::ROLE_ADMIN : User::ROLE_STUDENT,
+                'role' => $data['role'] === 'admin' ? User::ROLE_ADMIN : ($data['role'] === 'guru' ? User::ROLE_GURU : User::ROLE_STUDENT),
                 'status' => User::STATUS_AKTIF,
                 'email_verified_at' => now(),
             ]);
@@ -126,7 +128,7 @@ class AdminService
             }
 
             if (isset($data['role'])) {
-                $fill['role'] = $data['role'] === 'admin' ? User::ROLE_ADMIN : User::ROLE_STUDENT;
+                $fill['role'] = $data['role'] === 'admin' ? User::ROLE_ADMIN : ($data['role'] === 'guru' ? User::ROLE_GURU : User::ROLE_STUDENT);
             }
 
             if (isset($data['status'])) {
@@ -378,7 +380,12 @@ class AdminService
 
     private function saveThumbnail($file): ?string
     {
-        $path = $file->store('programs', 'public');
+        try {
+            $path = UploadSanitizer::store($file, 'programs', 'image');
+        } catch (\Throwable $e) {
+            abort(422, 'Berkas thumbnail tidak diizinkan.');
+        }
+
         $this->cacheImage($path);
 
         return $path;

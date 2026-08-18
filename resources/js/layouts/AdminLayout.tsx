@@ -2,13 +2,14 @@ import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     Bell,
-    BookOpen,
+    BookOpen, Clock,
     Building2,
     ClipboardList,
     LayoutDashboard,
     LogOut,
     Menu,
     Megaphone,
+    Shield,
     Users,
     Wallet,
     X,
@@ -28,6 +29,8 @@ const NAV = [
     { label: 'Pembayaran', href: '/admin/pembayaran', icon: Wallet },
     { label: 'Pengumuman', href: '/admin/announcements', icon: Megaphone },
     { label: 'Asrama', href: '/admin/asrama', icon: Building2 },
+    { label: 'Absensi', href: '/admin/absensi', icon: Clock },
+    { label: 'Keamanan', href: '/admin/security', icon: Shield },
 ];
 
 function NavItem({ href, label, icon: Icon }: (typeof NAV)[number]) {

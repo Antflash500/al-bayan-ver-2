@@ -5,7 +5,7 @@ import {
     CreditCard,
     LayoutDashboard,
     LogOut,
-    Search,
+    Search, Clock,
     User,
 } from 'lucide-react';
 import { SITE } from '@/lib/constants';
@@ -113,6 +113,27 @@ export function StudentSidebar({ className, onItemClick }: SidebarProps) {
                             Cari Program
                         </Link>
                     </nav>
+
+                {/* Kelompok ABSENSI */}
+                <div>
+                    <span className="px-3 text-[11px] font-semibold tracking-wider text-muted uppercase">
+                        ABSENSI
+                    </span>
+                    <nav className="mt-2 flex flex-col gap-1">
+                        <Link
+                            href="/siswa/absensi"
+                            onClick={onItemClick}
+                            className={cn(
+                                'flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-150',
+                                isActive('/siswa/absensi')
+                                    ? 'bg-primary text-white shadow-soft font-semibold'
+                                    : 'text-muted hover:bg-surface hover:text-foreground'
+                            )}
+                        >
+                            <Clock className="size-4" /> Absensi Saya
+                        </Link>
+                    </nav>
+                </div>
                 </div>
 
                 {/* Kelompok AKUN */}

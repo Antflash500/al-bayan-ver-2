@@ -3,9 +3,11 @@
 use App\Http\Controllers\Admin\AdminAsramaController;
 use App\Http\Controllers\Admin\AdminMateriController;
 use App\Http\Controllers\Admin\AdminPembayaranController;
+use App\Http\Controllers\Admin\SecurityController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Auth\AdminLoginController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\Auth\GuruLoginController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\Auth\RegisterController;
@@ -20,6 +22,11 @@ use App\Http\Controllers\Siswa\SiswaPembayaranController;
 use App\Http\Controllers\Siswa\SiswaProfilController;
 use App\Http\Controllers\Siswa\SiswaProgramController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Controllers\GuruController;
+use App\Http\Controllers\Guru\GuruProgramController;
+use App\Http\Controllers\Guru\GuruAbsensiController;
+use App\Http\Controllers\Siswa\SiswaAbsensiController;
+use App\Http\Controllers\Admin\AdminAbsensiController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [LandingController::class, 'index'])->name('home');
@@ -58,6 +65,9 @@ Route::middleware('guest')->group(function () {
 
     Route::get('/admin/login', [AdminLoginController::class, 'create'])->name('admin.login');
     Route::post('/admin/login', [AdminLoginController::class, 'store'])->middleware('throttle:auth-login')->name('admin.login.store');
+
+    Route::get('/guru/login', [GuruLoginController::class, 'create'])->name('guru.login');
+    Route::post('/guru/login', [GuruLoginController::class, 'store'])->middleware('throttle:auth-login')->name('guru.login.store');
 });
 
 Route::middleware('auth')->group(function () {
@@ -109,6 +119,31 @@ Route::middleware('auth')->group(function () {
         Route::delete('/asrama/kamar/{kamar}', [AdminAsramaController::class, 'destroyKamar'])->name('asrama.kamar.destroy');
         Route::post('/asrama/assign', [AdminAsramaController::class, 'assign'])->name('asrama.assign');
         Route::post('/asrama/vacate/{kasur}', [AdminAsramaController::class, 'vacate'])->name('asrama.vacate');
+        Route::get('/absensi', [AdminAbsensiController::class, 'index'])->name('absensi');
+
+        // Keamanan & monitoring
+        Route::get('/security', [SecurityController::class, 'index'])->name('security');
+        Route::get('/security/export', [SecurityController::class, 'exportCsv'])->name('security.export');
+        Route::post('/security/health', [SecurityController::class, 'health'])->name('security.health');
+        Route::post('/security/ban', [SecurityController::class, 'ban'])->name('security.ban');
+        Route::post('/security/unban', [SecurityController::class, 'unban'])->name('security.unban');
+        Route::post('/security/session/terminate', [SecurityController::class, 'terminateSession'])->name('security.session.terminate');
+        Route::post('/security/sessions/{user}/terminate', [SecurityController::class, 'terminateOtherSessions'])->name('security.sessions.terminate-others');
+        Route::post('/security/analyze', [SecurityController::class, 'runAnalyze'])->name('security.analyze');
+        Route::post('/security/integrity', [SecurityController::class, 'runIntegrity'])->name('security.integrity');
+        Route::post('/security/integrity/rebuild', [SecurityController::class, 'rebuildIntegrity'])->name('security.integrity.rebuild');
+        Route::post('/security/scan', [SecurityController::class, 'runScan'])->name('security.scan');
+        Route::post('/security/sweep', [SecurityController::class, 'runSweep'])->name('security.sweep');
+        Route::post('/security/logout-all', [SecurityController::class, 'logoutAll'])->name('security.logout-all');
+        Route::post('/security/ip/scan', [SecurityController::class, 'scanIp'])->name('security.ip-scan');
+        Route::post('/security/device/block', [SecurityController::class, 'blockDevice'])->name('security.device-block');
+        Route::post('/security/device/unblock', [SecurityController::class, 'unblockDevice'])->name('security.device-unblock');
+        Route::post('/security/self-test', [SecurityController::class, 'selfTest'])->name('security.self-test');
+        Route::post('/security/lockdown', [SecurityController::class, 'toggleLockdown'])->name('security.lockdown');
+        Route::post('/security/respond', [SecurityController::class, 'respond'])->name('security.respond');
+        Route::post('/security/scan-gaps', [SecurityController::class, 'scanGaps'])->name('security.scan-gaps');
+        Route::post('/security/scan-backdoors', [SecurityController::class, 'scanBackdoors'])->name('security.scan-backdoors');
+        Route::get('/security/export/json', [SecurityController::class, 'exportJson'])->name('security.export-json');
     });
 
     Route::middleware('role:siswa')->group(function () {
@@ -141,6 +176,49 @@ Route::middleware('auth')->group(function () {
         Route::post('/siswa/heartbeat', [HeartbeatController::class, 'ping'])
             ->middleware('throttle:heartbeat')
             ->name('siswa.heartbeat');
+
+        Route::get('/siswa/absensi', [SiswaAbsensiController::class, 'index'])->name('siswa.absensi');
+        Route::post('/siswa/absensi', [SiswaAbsensiController::class, 'checkIn'])->name('siswa.absensi.store');
+    });
+
+    Route::prefix('guru')->name('guru.')->middleware('role:guru')->group(function () {
+        Route::get('/', [GuruController::class, 'home'])->name('home');
+        Route::get('/programs', [GuruProgramController::class, 'index'])->name('programs');
+        Route::patch('/programs/{program}', [GuruProgramController::class, 'updateProgram'])->name('programs.update');
+        Route::get('/programs/{program}/materi', [GuruProgramController::class, 'materi'])->name('programs.materi');
+        Route::post('/programs/{program}/materi', [GuruProgramController::class, 'storeMateri'])->name('programs.materi.store');
+        Route::post('/programs/{program}/materi/{materi}/move/{direction}', [GuruProgramController::class, 'moveMateri'])->name('programs.materi.move');
+        Route::patch('/programs/{program}/materi/{materi}', [GuruProgramController::class, 'updateMateri'])->name('programs.materi.update');
+        Route::delete('/programs/{program}/materi/{materi}', [GuruProgramController::class, 'destroyMateri'])->name('programs.materi.destroy');
+        Route::post('/programs/{program}/materi/{materi}/konten', [GuruProgramController::class, 'storeKonten'])->name('programs.materi.konten.store');
+        Route::patch('/programs/{program}/materi/{materi}/konten/{konten}', [GuruProgramController::class, 'updateKonten'])->name('programs.materi.konten.update');
+        Route::delete('/programs/{program}/materi/{materi}/konten/{konten}', [GuruProgramController::class, 'destroyKonten'])->name('programs.materi.konten.destroy');
+        Route::post('/programs/{program}/materi/{materi}/konten/{konten}/move/{direction}', [GuruProgramController::class, 'moveKonten'])->name('programs.materi.konten.move');
+        
+        // Quizzes
+        Route::post('/programs/{program}/materi/{materi}/quizzes', [GuruProgramController::class, 'storeQuiz'])->name('programs.materi.quizzes.store');
+        Route::patch('/programs/{program}/materi/{materi}/quizzes/{quiz}', [GuruProgramController::class, 'updateQuiz'])->name('programs.materi.quizzes.update');
+        Route::delete('/programs/{program}/materi/{materi}/quizzes/{quiz}', [GuruProgramController::class, 'destroyQuiz'])->name('programs.materi.quizzes.destroy');
+
+        // Questions
+        Route::post('/programs/{program}/materi/{materi}/quizzes/{quiz}/soal', [GuruProgramController::class, 'storeSoal'])->name('programs.materi.quizzes.soal.store');
+        Route::patch('/programs/{program}/materi/{materi}/quizzes/{quiz}/soal/{soal}', [GuruProgramController::class, 'updateSoal'])->name('programs.materi.quizzes.soal.update');
+        Route::delete('/programs/{program}/materi/{materi}/quizzes/{quiz}/soal/{soal}', [GuruProgramController::class, 'destroySoal'])->name('programs.materi.quizzes.soal.destroy');
+
+        // Absensi
+        Route::get('/absensi', [GuruAbsensiController::class, 'index'])->name('absensi');
+        Route::post('/absensi', [GuruAbsensiController::class, 'checkIn'])->name('absensi.store');
+        Route::post('/absensi/{absensi}/verify', [GuruAbsensiController::class, 'verify'])->name('absensi.verify');
+
+        // Fitur tambahan guru
+        Route::get('/siswa', [GuruController::class, 'students'])->name('siswa');
+        Route::get('/pengumuman', [GuruController::class, 'pengumuman'])->name('pengumuman');
+        Route::get('/laporan', [GuruController::class, 'laporan'])->name('laporan');
+        Route::get('/sertifikat', [GuruController::class, 'sertifikat'])->name('sertifikat');
+        Route::get('/galeri', [GuruController::class, 'galeri'])->name('galeri');
+        Route::get('/aktivitas', [GuruController::class, 'aktivitas'])->name('aktivitas');
+        Route::get('/profil', [GuruController::class, 'profil'])->name('profil');
+        Route::patch('/profil', [GuruController::class, 'updateProfil'])->name('profil.update');
     });
 
     Route::redirect('/dashboard', '/admin');

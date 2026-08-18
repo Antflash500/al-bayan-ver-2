@@ -33,6 +33,7 @@ function RoleSelect({
             className="h-9 rounded-[var(--radius-input)] border border-input bg-white px-2 text-xs font-medium text-foreground outline-none transition focus:border-secondary"
         >
             <option value="siswa">Siswa</option>
+            <option value="guru">Guru</option>
             <option value="admin">Admin</option>
         </select>
     );
@@ -529,6 +530,7 @@ export default function Users({
                                 }
                             >
                                 <option value="siswa">Siswa</option>
+                                <option value="guru">Guru</option>
                                 <option value="admin">Admin</option>
                             </select>
                         </div>

@@ -12,11 +12,6 @@ class PortalController extends Controller
 {
     public function __construct(private readonly PortalService $portal) {}
 
-    public function home(): Response
-    {
-        return Inertia::render('Portal/Home', $this->portal->home(auth()->user()));
-    }
-
     public function programs(Request $request): Response
     {
         $q = trim((string) $request->query('q'));
@@ -51,16 +46,6 @@ class PortalController extends Controller
     {
         return Inertia::render('Portal/Sertifikat', [
             'certificates' => $this->portal->sertifikat(auth()->user()),
-        ]);
-    }
-
-    public function profil(): Response
-    {
-        $user = auth()->user();
-
-        return Inertia::render('Portal/Profil', [
-            'email' => $user?->email,
-            'profile' => $user?->profile,
         ]);
     }
 }

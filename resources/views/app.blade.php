@@ -14,6 +14,19 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+        @php
+            $viteDevUrl = file_exists(public_path('hot')) ? rtrim(file_get_contents(public_path('hot'))) : null;
+        @endphp
+        @if ($viteDevUrl)
+            <script type="module">
+                import RefreshRuntime from '{{ $viteDevUrl }}/@react-refresh';
+                RefreshRuntime.injectIntoGlobalHook(window);
+                window.$RefreshReg$ = () => {};
+                window.$RefreshSig$ = () => (type) => type;
+                window.__vite_plugin_react_preamble_installed__ = true;
+            </script>
+        @endif
+
         @vite(['resources/css/app.css', 'resources/js/app.tsx'])
         @inertiaHead
     </head>

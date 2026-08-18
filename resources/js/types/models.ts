@@ -189,7 +189,7 @@ export interface Pengguna {
     username: string | null;
     password?: string;
     program_ids?: number[];
-    role: 'siswa' | 'admin';
+    role: 'siswa' | 'admin' | 'guru';
     status: 'aktif' | 'nonaktif' | 'ditangguhkan';
     email_terverifikasi: boolean;
     terakhir_login: string | null;

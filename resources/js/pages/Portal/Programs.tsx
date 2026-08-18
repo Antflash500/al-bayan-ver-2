@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { useRef, useState } from 'react';
 import { ArrowRight, BookOpen, Clock, Search } from 'lucide-react';
 import StudentPortalLayout from '@/layouts/StudentPortalLayout';
-import { EmptyState } from '@/pages/Portal/parts';
+import { EmptyState } from '@/components/portal/parts';
 import { mediaUrl } from '@/lib/image';
 import type { ProgramKursus } from '@/types/models';
 

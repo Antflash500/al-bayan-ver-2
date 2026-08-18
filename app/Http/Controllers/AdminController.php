@@ -88,7 +88,7 @@ class AdminController extends Controller
             'password' => ['required', 'string', Password::min(8)->letters()->numbers()],
             'tanggal_lahir' => ['nullable', 'date'],
             'jenis_kelamin' => ['nullable', 'in:laki_laki,perempuan'],
-            'role' => ['required', 'in:siswa,admin'],
+            'role' => ['required', 'in:siswa,admin,guru'],
         ]);
 
         $this->admin->createUser($data);
@@ -110,7 +110,7 @@ class AdminController extends Controller
             'password' => ['nullable', 'string', Password::min(8)->letters()->numbers()],
             'tanggal_lahir' => ['nullable', 'date'],
             'jenis_kelamin' => ['nullable', 'in:laki_laki,perempuan'],
-            'role' => ['sometimes', 'in:siswa,admin'],
+            'role' => ['sometimes', 'in:siswa,admin,guru'],
             'status' => ['sometimes', 'in:aktif,nonaktif'],
             'program_ids' => ['nullable', 'array'],
             'program_ids.*' => ['integer', 'exists:program,id'],

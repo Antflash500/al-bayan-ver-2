@@ -14,7 +14,10 @@ class EnsureRole
 
         abort_if(! $user, 401);
 
-        $normalized = $user->isAdmin() ? 'admin' : 'siswa';
+        $normalized = $user->role;
+        if ($normalized === 'student') {
+            $normalized = 'siswa';
+        }
 
         if (! in_array($normalized, $roles, true)) {
             abort(403);

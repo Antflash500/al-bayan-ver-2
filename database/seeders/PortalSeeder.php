@@ -155,12 +155,24 @@ class PortalSeeder extends Seeder
         $siswa->update(['username' => 'siswa123']);
 
         User::firstOrCreate(
-            ['username' => 'adminalbayan'],
+            ['email' => 'admin@albayan.test'],
             [
+                'username' => 'adminalbayan',
                 'name' => 'Administrator Al Bayan',
-                'email' => 'admin@albayan.test',
                 'password' => 'albayan123',
                 'role' => User::ROLE_ADMIN,
+                'status' => User::STATUS_AKTIF,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::firstOrCreate(
+            ['email' => 'guru@albayan.test'],
+            [
+                'username' => 'gurualbayan',
+                'name' => 'Ustadz Ahmad Mudarris',
+                'password' => 'password123',
+                'role' => User::ROLE_GURU,
                 'status' => User::STATUS_AKTIF,
                 'email_verified_at' => now(),
             ]

@@ -12,8 +12,7 @@
         "laravel/reverb": "*",
         "laravel/sanctum": "*",
         "laravel/tinker": "^2.10.1",
-        "predis/predis": "*",
-        "tightenco/ziggy": "*"
+        "predis/predis": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
@@ -47,7 +46,7 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve --port=7000\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
+            "npx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve --host=0.0.0.0 --port=505\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite"
         ]
     },
     "extra": {

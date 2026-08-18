@@ -13,8 +13,8 @@ export default defineConfig({
         react(),
     ],
     server: {
-        host: '127.0.0.1',
-        port: 7003,
+        host: '0.0.0.0',
+        port: 5051,
         strictPort: true,
         cors: true,
         hmr: {

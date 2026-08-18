@@ -10,6 +10,10 @@ class MediaController extends Controller
 {
     public function programImage(string $path): Response
     {
+        if (! $this->isSafePath($path)) {
+            return new Response('Not Found', 404);
+        }
+
         $key = 'program:programs/'.$path;
         $bytes = $this->fromRedis($key);
 
@@ -33,6 +37,10 @@ class MediaController extends Controller
 
     public function buktiImage(string $path): Response
     {
+        if (! $this->isSafePath($path)) {
+            return new Response('Not Found', 404);
+        }
+
         $key = 'bukti:bukti/'.$path;
         $bytes = $this->fromRedis($key);
 
@@ -56,6 +64,10 @@ class MediaController extends Controller
 
     public function materiFile(string $path): Response
     {
+        if (! $this->isSafePath($path)) {
+            return new Response('Not Found', 404);
+        }
+
         $disk = Storage::disk('public');
         $relative = 'materi/'.$path;
 
@@ -67,6 +79,16 @@ class MediaController extends Controller
             'Content-Type' => $disk->mimeType($relative) ?: 'application/octet-stream',
             'Cache-Control' => 'public, max-age=86400',
         ]);
+    }
+
+    private function isSafePath(string $path): bool
+    {
+        return $path !== ''
+            && ! str_contains($path, '..')
+            && ! str_starts_with($path, '/')
+            && ! str_starts_with($path, '\\')
+            && ! str_contains($path, ':')
+            && ! preg_match('/\.(?:php|phtml|phar|shtml|pht|cgi|sh)(?:$|\/)/i', $path);
     }
 
     private function fromRedis(string $key): ?string

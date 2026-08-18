@@ -8,6 +8,7 @@ use App\Models\SiswaProgram;
 use App\Models\Transaksi;
 use App\Services\KwitansiService;
 use App\Services\PembayaranService;
+use App\Support\UploadSanitizer;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -121,7 +122,11 @@ class SiswaPembayaranController extends Controller
             abort(422, 'Transaksi sudah tidak dapat diubah.');
         }
 
-        $path = $data['bukti']->store('bukti', 'public');
+        try {
+            $path = UploadSanitizer::store($data['bukti'], 'bukti', 'image');
+        } catch (\Throwable $e) {
+            abort(422, 'Berkas bukti tidak diizinkan.');
+        }
 
         $this->pembayaranService->submitBuktiProof(
             $transaksi,

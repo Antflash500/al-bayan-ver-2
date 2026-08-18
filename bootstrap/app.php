@@ -9,6 +9,7 @@ use App\Http\Middleware\WebFirewall;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Auth;
@@ -20,6 +21,15 @@ return Application::configure(basePath: dirname(__DIR__))
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
     )
+    ->withSchedule(function (Schedule $schedule): void {
+        // 5 Sistem Keamanan yang selalu berjalan otomatis.
+        // Jalankan `php artisan schedule:work` (dev) atau cron * * * * * schedule:run (produksi).
+        $schedule->command('security:health')->everyMinute()->withoutOverlapping();
+        $schedule->command('security:analyze')->everyFiveMinutes()->withoutOverlapping();
+        $schedule->command('security:integrity')->hourly()->withoutOverlapping();
+        $schedule->command('security:sweep')->everyThirtyMinutes()->withoutOverlapping();
+        $schedule->command('security:scan-files')->dailyAt('03:00')->withoutOverlapping();
+    })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(prepend: [
             PreventAuthCaching::class,
@@ -43,12 +53,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'status' => CheckUserStatus::class,
         ]);
 
-        $middleware->redirectGuestsTo(fn (Request $request) => ($request->is('admin') || $request->is('admin/*') || $request->is('dashboard'))
-            ? route('admin.login')
-            : route('login'));
-        $middleware->redirectUsersTo(fn () => auth()->user()?->isAdmin()
-            ? route('admin.home')
-            : route('siswa.dashboard'));
+        $middleware->redirectGuestsTo(fn (Request $request) => match (true) {
+            $request->is('admin') || $request->is('admin/*') || $request->is('dashboard') => route('admin.login'),
+            $request->is('guru') || $request->is('guru/*') => route('guru.login'),
+            default => route('login'),
+        });
+        $middleware->redirectUsersTo(fn () => match (true) {
+            auth()->user()?->isAdmin() => route('admin.home'),
+            auth()->user()?->isGuru() => route('guru.home'),
+            default => route('siswa.dashboard'),
+        });
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (TokenMismatchException $e, Request $request) {

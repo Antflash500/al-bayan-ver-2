@@ -18,6 +18,27 @@ class WebFirewall
             return $next($request);
         }
 
+        // Mode lockdown (kunci gerbang): hanya IP allowlist + IP admin saat
+        // lockdown diaktifkan yang boleh lewat.
+        $lockdown = SecurityGuard::lockdownInfo();
+
+        if ($lockdown !== null && $ip !== ($lockdown['safe_ip'] ?? '')) {
+            return $this->deny($ip, 'Benteng dalam mode lockdown.');
+        }
+
+        // Perangkat (User-Agent) yang diblokir.
+        $userAgent = (string) $request->userAgent();
+
+        if (SecurityGuard::isDeviceBlocked($userAgent)) {
+            SecurityGuard::registerBlocked($ip, 'perangkat diblokir');
+            logger()->channel('security')->warning('Akses dari perangkat yang diblokir', [
+                'ip' => $ip,
+                'user_agent' => $userAgent,
+            ]);
+
+            return $this->deny($ip, 'Akses ditolak.');
+        }
+
         // IP yang sedang diban sementara.
         if (SecurityGuard::isBanned($ip)) {
             return $this->deny($ip, 'Akses ditolak karena aktivitas mencurigakan.');
@@ -63,6 +84,8 @@ class WebFirewall
                 'traversal-encode' => '/%2e%2e(?:%2f|%5c|\/)/i',
                 'crlf' => '/%0d%0a/i',
                 'nullbyte' => '/%00/i',
+                'dotfile' => '/(?:^|\/)(?:\.env(?:$|[\/.]))|(?:^|\/)(?:\.git(?:$|[\/]))|(?:^|\/)\.ht(?:access|passwd)(?:$|[\/?#])|(?:^|\/)\.(?:gitignore|svn|DS_Store|user\.ini)(?:$|[\/?#])/i',
+                'exec-ext' => '/(?:^|\/)[^\/?#]*\.(?:php|phtml|phar|shtml|pht|php3|php4|php5|php7|php8|cgi)(?:$|[?])/i',
             ];
 
             foreach ($uriValues as $uriValue) {

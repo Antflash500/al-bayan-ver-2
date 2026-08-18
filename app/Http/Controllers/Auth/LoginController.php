@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\SecurityLog;
 use App\Services\AuthenticationService;
 use App\Support\SecurityGuard;
 use Illuminate\Http\Request;
@@ -34,6 +35,10 @@ class LoginController extends Controller
 
         if (! $user) {
             SecurityGuard::recordLoginFailure((string) $request->ip());
+            SecurityGuard::recordEndpoint(SecurityLog::TIPE_LOGIN_GAGAL, (string) $request->ip(), [
+                'path' => '/login',
+                'keterangan' => 'Percobaan login gagal untuk username: '.$data['username'],
+            ]);
 
             return back()->withErrors([
                 'username' => 'Username atau password salah, atau akun belum diaktifkan admin.',
@@ -43,7 +48,18 @@ class LoginController extends Controller
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
         SecurityGuard::clearLoginFailures((string) $request->ip());
+        SecurityGuard::recordEndpoint(SecurityLog::TIPE_LOGIN_SUKSES, (string) $request->ip(), [
+            'path' => '/login',
+            'browser' => substr((string) $request->userAgent(), 0, 190),
+            'keterangan' => 'Login berhasil melalui portal.',
+        ], $user->id);
 
-        return redirect()->route($user->isAdmin() ? 'admin.home' : 'siswa.dashboard');
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.home');
+        } elseif ($user->isGuru()) {
+            return redirect()->route('guru.home');
+        } else {
+            return redirect()->route('siswa.dashboard');
+        }
     }
 }
